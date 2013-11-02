@@ -28,16 +28,19 @@ public class Midlet extends MIDlet implements
     
     private Command exitCommand;    
     private Command backCommand;    
-    private Command okCommand;    
+    private Command okCommand;
     
     private Gauge connectingGauge;
     private Alert connectingAlert;
+    
+    private HRM hrm;
     
     public Midlet() {
         form=new Form("ST-HRM2 Ex");
         
         exitCommand = new Command("Exit", Command.EXIT, 1);        
-        okCommand = new Command("Connect HRM", Command.OK, 1);
+        okCommand = new Command("Connect", Command.OK, 1);
+        backCommand = new Command("DisConnect", Command.OK, 2);
         
         hrmData = new StringItem("HR", "---");
         hrmErr = new StringItem("MSG", "");
@@ -53,19 +56,25 @@ public class Midlet extends MIDlet implements
     public void commandAction(Command c, Displayable d) {
         if (c==okCommand) {            
             startHRM();
+        } else if (c==backCommand) {
+            stopHRM();
         } else if (c==exitCommand) {
             exitMIDlet();
         }
     }
     
     private void startHRM() {
-        hrmData.setText("Starting...");
-        HRM hrm=new HRM(this);
-        hrm.setHRMBtAddress("btspp://FF0BAE1CA3E0:1");
         hrmData.setText("Connecting.");
+        hrm=new HRM(this);
+        hrm.setHRMBtAddress("btspp://FF0BAE1CA3E0:1");        
         Thread ht = new Thread(hrm);
-        ht.start();
-        hrmData.setText("Connecting...");
+        ht.start();        
+    }
+    
+    private void stopHRM() {
+        if (hrm!=null)
+            hrm.stop();
+        hrm=null;
     }
     
     public void heartRate(int hr) {
@@ -77,13 +86,14 @@ public class Midlet extends MIDlet implements
     }
     
     public void heartRateConnected() {
-        
+        form.removeCommand(okCommand);
+        form.addCommand(backCommand);
     }
     
     public void heartRateDisconnected() {
-        
-    }
-    
+        form.removeCommand(backCommand);        
+        form.addCommand(okCommand);        
+    }    
     
     public void switchDisplayable(Alert alert, Displayable nextDisplayable) {
         Display display = getDisplay();        

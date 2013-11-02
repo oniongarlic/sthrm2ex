@@ -134,8 +134,8 @@ public class HRM implements Runnable {
             data = new DataInputStream(c.openInputStream());
             Log.log("D");
             connected = true;
-            lh.heartRate(0);
-            lh.heartRateError("Connected");
+            lh.heartRate(0);            
+            lh.heartRateConnected();
             return true;
         } catch (ConnectionNotFoundException e) {
             lh.heartRateError("CNFE"+e.getMessage());
@@ -163,19 +163,27 @@ public class HRM implements Runnable {
         data=null;
         c=null;
         connected = false;
+        lh.heartRateDisconnected();
+    }
+    
+    public void stop() {
+        isActive=false;
     }
     
     public void run() {
         lh.heartRateError("RUN");
         if (connect()==false) {
-            // lh.heartRateError("Failed");
+            lh.heartRateError("ConFail");
+            lh.heartRateDisconnected();
             return;
+        } else {
+            lh.heartRateConnected();
         }
-        isActive=true;
-        Log.log("ACT");
+        isActive=true;        
         while (isActive) {
             boolean r=readHRMData();
             if (r==false) {
+                lh.heartRateError("RF");
                 // return;
             }
             try {
@@ -184,6 +192,7 @@ public class HRM implements Runnable {
                 //
             }
         }
+        disconnect();
     }    
     
 }
