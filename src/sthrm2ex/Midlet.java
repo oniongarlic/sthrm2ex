@@ -24,6 +24,7 @@ public class Midlet extends MIDlet implements
         CommandListener {
     private Form form;                    
     private StringItem hrmData;
+    private StringItem hrmBat;
     private StringItem hrmErr;
     
     private Command exitCommand;    
@@ -43,12 +44,19 @@ public class Midlet extends MIDlet implements
         backCommand = new Command("DisConnect", Command.OK, 2);
         
         hrmData = new StringItem("HR", "---");
-        hrmErr = new StringItem("MSG", "");
+        hrmBat = new StringItem("Battery Level", "---");
+        hrmErr = new StringItem("ErrMSG", "");
                
+        connectingGauge=new Gauge(null, false, Gauge.INDEFINITE, Gauge.CONTINUOUS_IDLE);
+        connectingAlert=new Alert("Connecting");
+        connectingAlert.setIndicator(connectingGauge);
+        connectingAlert.setTimeout(Alert.FOREVER);
+        
         form.addCommand(exitCommand);
         form.addCommand(okCommand);
         
         form.append(hrmData);
+        form.append(hrmBat);
         form.append(hrmErr);
         form.setCommandListener(this);
     }
@@ -63,8 +71,19 @@ public class Midlet extends MIDlet implements
         }
     }
     
+    public void showConnecting(String msg) {
+        connectingGauge.setValue(Gauge.CONTINUOUS_RUNNING);
+        connectingAlert.setString(msg);
+        switchDisplayable(connectingAlert, form);
+    }
+    
+    public void hideConnecting() {
+        //connectingAlert.setTimeout(200);
+        switchDisplayable(null, form);
+    }
+    
     private void startHRM() {
-        hrmData.setText("Connecting.");
+        showConnecting("Connecting HRM...");
         hrm=new HRM(this);
         hrm.setHRMBtAddress("btspp://FF0BAE1CA3E0:1");        
         Thread ht = new Thread(hrm);
@@ -81,6 +100,10 @@ public class Midlet extends MIDlet implements
         hrmData.setText(Integer.toString(hr));
     }
     
+    public void heartRateBattery(int batlevel) {
+        hrmBat.setText(Integer.toHexString(batlevel));
+    }
+    
     public void heartRateError(String msg) {
         hrmErr.setText(msg);
     }
@@ -88,11 +111,13 @@ public class Midlet extends MIDlet implements
     public void heartRateConnected() {
         form.removeCommand(okCommand);
         form.addCommand(backCommand);
+        hideConnecting();
     }
     
     public void heartRateDisconnected() {
         form.removeCommand(backCommand);        
-        form.addCommand(okCommand);        
+        form.addCommand(okCommand);
+        hideConnecting();
     }    
     
     public void switchDisplayable(Alert alert, Displayable nextDisplayable) {

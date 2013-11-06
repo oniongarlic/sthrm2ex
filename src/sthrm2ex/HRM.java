@@ -22,7 +22,7 @@ public class HRM implements Runnable {
     private final int STATE_MARK2=3;
     
     private final int STATE_UNKNOWN1=4;
-    private final int STATE_UNKNOWN2=5;
+    private final int STATE_BATTERY=5;
     private final int STATE_UNKNOWN3=6;
     private final int STATE_UNKNOWN4=7;
     
@@ -36,7 +36,7 @@ public class HRM implements Runnable {
     private int mark2=0;
     private int u1=0;
     private int u2=0;
-    private int u3=0;
+    private int battery=0;
     private int hr=0;
     
     private String bt;
@@ -69,9 +69,7 @@ public class HRM implements Runnable {
         if (i==-1)
             return false;
         if (i==0)
-            return true;
-        
-        Log.log("BTR: "+i);
+            return true;                
         
         switch (state) {
             // Looking for start message byte 0xFA
@@ -98,18 +96,20 @@ public class HRM implements Runnable {
             case STATE_UNKNOWN1:
                 // 0x81 ?
                 u1=i;
-                state=STATE_UNKNOWN2;
+                state=STATE_BATTERY;
                 break;
-            case STATE_UNKNOWN2:
-                // 0x24 ?
-                u2=i;
-                lh.heartRateError(Integer.toHexString(u1)+" : "+Integer.toHexString(u2));
+            case STATE_BATTERY:
+                // Battery level ?                
+                if (u1==0x81 && i!=battery) {
+                    battery=i;
+                    lh.heartRateBattery(i);
+                }                
                 state=STATE_HRM; 
                 break;
             case STATE_HRM:
                 hr=i;
                 lh.heartRate(hr);
-                // Ok, we got what we need, wait for initial marker. We ignore anything else
+                // Ok, we got what we need, wait for initial marker. We ignore anything else for now
                 state=STATE_INITIAL;
                 break;
             case STATE_UNKNOWN3:
@@ -129,10 +129,8 @@ public class HRM implements Runnable {
     
     private boolean connect() {
         try {
-            c = (StreamConnection) Connector.open(bt, Connector.READ_WRITE, true);
-            Log.log("C");
-            data = new DataInputStream(c.openInputStream());
-            Log.log("D");
+            c = (StreamConnection) Connector.open(bt, Connector.READ_WRITE, true);            
+            data = new DataInputStream(c.openInputStream());            
             connected = true;
             lh.heartRate(0);            
             lh.heartRateConnected();
@@ -150,8 +148,7 @@ public class HRM implements Runnable {
         return false;
     }
     
-    private void disconnect() {
-        Log.log("DISC");
+    private void disconnect() {        
         try {
             if (data!=null)
                 data.close();
@@ -170,8 +167,7 @@ public class HRM implements Runnable {
         isActive=false;
     }
     
-    public void run() {
-        lh.heartRateError("RUN");
+    public void run() {        
         if (connect()==false) {
             lh.heartRateError("ConFail");
             lh.heartRateDisconnected();
@@ -193,6 +189,5 @@ public class HRM implements Runnable {
             }
         }
         disconnect();
-    }    
-    
+    }        
 }

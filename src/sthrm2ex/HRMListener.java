@@ -10,6 +10,7 @@ package sthrm2ex;
  */
 public interface HRMListener {
     void heartRate(int hr);
+    void heartRateBattery(int batlevel);
     void heartRateError(String msg);
     void heartRateConnected();
     void heartRateDisconnected();
