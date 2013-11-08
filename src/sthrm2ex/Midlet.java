@@ -4,16 +4,7 @@
  */
 package sthrm2ex;
 
-import javax.microedition.lcdui.Alert;
-import javax.microedition.lcdui.AlertType;
-import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.CommandListener;
-import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.Form;
-import javax.microedition.lcdui.Gauge;
-import javax.microedition.lcdui.StringItem;
-import javax.microedition.lcdui.TextField;
+import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
 
 /**
@@ -22,6 +13,7 @@ import javax.microedition.midlet.*;
 public class Midlet extends MIDlet implements 
         HRMListener,
         CommandListener {
+    
     private Form form;                    
     private StringItem hrmData;
     private StringItem hrmBat;
@@ -30,11 +22,16 @@ public class Midlet extends MIDlet implements
     private Command exitCommand;    
     private Command backCommand;    
     private Command okCommand;
+    private Command selectDeviceCommand;
     
     private Gauge connectingGauge;
     private Alert connectingAlert;
     
+    private HR hr;
+    
     private HRM hrm;
+    
+    private List deviceList;
     
     public Midlet() {
         form=new Form("ST-HRM2 Ex");
@@ -42,6 +39,8 @@ public class Midlet extends MIDlet implements
         exitCommand = new Command("Exit", Command.EXIT, 1);        
         okCommand = new Command("Connect", Command.OK, 1);
         backCommand = new Command("DisConnect", Command.OK, 2);
+        
+        selectDeviceCommand = new Command("Select Device", Command.SCREEN, 1);
         
         hrmData = new StringItem("HR", "---");
         hrmBat = new StringItem("Battery Level", "---");
@@ -55,6 +54,8 @@ public class Midlet extends MIDlet implements
         form.addCommand(exitCommand);
         form.addCommand(okCommand);
         
+        form.addCommand(selectDeviceCommand);
+        
         form.append(hrmData);
         form.append(hrmBat);
         form.append(hrmErr);
@@ -66,9 +67,16 @@ public class Midlet extends MIDlet implements
             startHRM();
         } else if (c==backCommand) {
             stopHRM();
+        } else if (c==selectDeviceCommand) {
+            switchDisplayable(null, getDevicesList());
         } else if (c==exitCommand) {
             exitMIDlet();
         }
+    }
+    
+    public List getDevicesList() {
+        BtDeviceSelect btd=new BtDeviceSelect();
+        return btd.getDeviceList();
     }
     
     public void showConnecting(String msg) {

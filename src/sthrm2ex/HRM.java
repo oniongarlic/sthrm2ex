@@ -10,7 +10,6 @@ import javax.microedition.io.StreamConnection;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-
 /**
  *
  * @author milang
