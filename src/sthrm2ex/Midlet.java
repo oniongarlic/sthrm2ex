@@ -48,6 +48,7 @@ public class Midlet extends MIDlet implements
                
         connectingGauge=new Gauge(null, false, Gauge.INDEFINITE, Gauge.CONTINUOUS_IDLE);
         connectingAlert=new Alert("Connecting");
+        
         connectingAlert.setIndicator(connectingGauge);
         connectingAlert.setTimeout(Alert.FOREVER);
         
@@ -75,7 +76,7 @@ public class Midlet extends MIDlet implements
     }
     
     public List getDevicesList() {
-        BtDeviceSelect btd=new BtDeviceSelect();
+        BtDeviceSelect btd=new BtDeviceSelect(form);
         return btd.getDeviceList();
     }
     

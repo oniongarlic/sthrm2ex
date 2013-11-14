@@ -1,31 +1,71 @@
 package sthrm2ex;
 
 import javax.bluetooth.*;
-import javax.microedition.lcdui.List;
+import javax.microedition.lcdui.*;
 
 /**
  *
  * @author milang
  */
-public class BtDeviceSelect implements DiscoveryListener {
+public class BtDeviceSelect implements
+        DiscoveryListener,
+        CommandListener {
+    
+    private List deviceList;
+    private Command cancelCommand;
+    private Command selectCommand;          
+    
+    private DiscoveryAgent da;
+    
+    private Displayable parent;
     
     /**
      *
      */
-    public BtDeviceSelect() {
+    public BtDeviceSelect(Displayable parent) {
+        deviceList=new List("Devices", List.IMPLICIT);
         
+        this.parent=parent;
+        
+        selectCommand=new Command("Select", Command.OK, 1);
+        cancelCommand=new Command("Cancel", Command.BACK, 1);
+        
+        deviceList.setSelectCommand(selectCommand);
+        deviceList.addCommand(cancelCommand);
+        
+        deviceList.setCommandListener(this);
     }
     
-    public List getDeviceList() {
-        List l=new List("Devices", List.IMPLICIT);
+    public void commandAction (Command c, Displayable d) {
+        if (c==selectCommand) {
+            
+        } else if (c==cancelCommand) {
+            if (da!=null)
+                da.cancelInquiry(this);
+        }
+    }
+    
+    public List getDeviceList() {        
         RemoteDevice[] devs=getDevices();
+        
+        deviceList.deleteAll();
+        if (devs!=null) {
+            appendDevices(devs);
+        } else {
+            deviceList.setTitle("Searching...");
+            deviceList.setSelectCommand(null);
+            searchDevices();
+        }
+        
+        return deviceList;
+    }
+    
+    private void appendDevices(RemoteDevice[] devs) {
         int i;
         
         for (i=0;i<devs.length;i++) {
-            l.append(devs[i].getBluetoothAddress(), null);
-        }
-        
-        return l;
+            deviceList.append(devs[i].getBluetoothAddress(), null);
+        }    
     }
     
     /**
@@ -36,7 +76,7 @@ public class BtDeviceSelect implements DiscoveryListener {
     public RemoteDevice[] getDevices() {
         try {
             LocalDevice dev=LocalDevice.getLocalDevice();
-            DiscoveryAgent da=dev.getDiscoveryAgent();
+            da=dev.getDiscoveryAgent();
             return da.retrieveDevices(DiscoveryAgent.PREKNOWN);            
         } catch (Exception e) {
             Log.loge("SD: ", e);
@@ -50,15 +90,15 @@ public class BtDeviceSelect implements DiscoveryListener {
     public void searchDevices() {
         try {
             LocalDevice dev=LocalDevice.getLocalDevice();
-            DiscoveryAgent da=dev.getDiscoveryAgent();
+            da=dev.getDiscoveryAgent();
             da.startInquiry(DiscoveryAgent.GIAC, this);
         } catch (Exception e) {
             Log.loge("SD: ", e);
         }        
     }
     
-    public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {        
+        deviceList.append(btDevice.getBluetoothAddress(), null);        
     }
 
     public void servicesDiscovered(int transID, ServiceRecord[] servRecord) {
@@ -70,7 +110,8 @@ public class BtDeviceSelect implements DiscoveryListener {
     }
 
     public void inquiryCompleted(int discType) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        deviceList.setTitle("Devices");
+        deviceList.setSelectCommand(selectCommand);
     }
 
 }
