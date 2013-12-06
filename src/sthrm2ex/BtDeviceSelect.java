@@ -36,6 +36,7 @@ public class BtDeviceSelect implements
     
     private String defDevice;
     private String filter;
+    private String prefixFilter;
     
     private BtDeviceSelected listener;
     
@@ -82,6 +83,10 @@ public class BtDeviceSelect implements
     public void setDeviceNameFilter(String filter) {
         this.filter=filter;
     }
+
+    public void setDeviceNamePrefixFilter(String filter) {
+        this.prefixFilter=filter;
+    }    
     
     public void commandAction (Command c, Displayable d) {
         if (c==selectCommand) {
@@ -194,8 +199,7 @@ public class BtDeviceSelect implements
      * Bluetooth discovery callbacks
      */
     public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
-        String lName;
-        devices.addElement(btDevice);
+        String lName;        
         
         lName=btDevice.getBluetoothAddress();        
         try {
@@ -204,6 +208,18 @@ public class BtDeviceSelect implements
             Log.loge("GFN: ", e);
         }
         
+        // check if we have any filter, if so, check if we have match
+        if (prefixFilter.length()>0) {
+            if (lName.startsWith(prefixFilter)==false)
+                return;
+        }
+
+        if (filter.length()>0) {
+            if (lName.compareTo(filter)!=0)
+                return;
+        }
+                
+        devices.addElement(btDevice);
         deviceList.append(lName, null);
     }
 
