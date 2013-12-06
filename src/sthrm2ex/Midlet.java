@@ -12,6 +12,7 @@ import javax.microedition.midlet.*;
  */
 public class Midlet extends MIDlet implements 
         HRMListener,
+        BtDeviceSelected,
         CommandListener {
     
     private Form form;                    
@@ -27,20 +28,21 @@ public class Midlet extends MIDlet implements
     private Gauge connectingGauge;
     private Alert connectingAlert;
     
-    private HR hr;
-    
+    private HR hr;    
     private HRM hrm;
     
-    private List deviceList;
+    private BtDeviceSelect btd;
+    private String device="";
     
     public Midlet() {
-        form=new Form("ST-HRM2 Ex");
+        form=new Form("HRMEx-v0.02");
         
-        exitCommand = new Command("Exit", Command.EXIT, 1);        
+        exitCommand = new Command("Exit", Command.EXIT, 1);
+        
         okCommand = new Command("Connect", Command.OK, 1);
         backCommand = new Command("DisConnect", Command.OK, 2);
         
-        selectDeviceCommand = new Command("Select Device", Command.SCREEN, 1);
+        selectDeviceCommand = new Command("Select device", Command.SCREEN, 1);                
         
         hrmData = new StringItem("HR", "---");
         hrmBat = new StringItem("Battery Level", "---");
@@ -61,23 +63,32 @@ public class Midlet extends MIDlet implements
         form.append(hrmBat);
         form.append(hrmErr);
         form.setCommandListener(this);
+        
+        btd=new BtDeviceSelect(this, form, this);
     }
     
     public void commandAction(Command c, Displayable d) {
-        if (c==okCommand) {            
-            startHRM();
+        if (c==okCommand) {
+            if (device.length()==12) {
+                startHRM();
+            } else {
+                showError("HRM device not selected.");
+            }
         } else if (c==backCommand) {
             stopHRM();
         } else if (c==selectDeviceCommand) {
-            switchDisplayable(null, getDevicesList());
+            btd.showDeviceList();
         } else if (c==exitCommand) {
             exitMIDlet();
         }
     }
     
-    public List getDevicesList() {
-        BtDeviceSelect btd=new BtDeviceSelect(form);
-        return btd.getDeviceList();
+    public void btDeviceSelected(String address) {        
+        if (address.length()==12) {
+            device=address;
+        } else {
+            device="";
+        }
     }
     
     public void showConnecting(String msg) {
@@ -94,7 +105,7 @@ public class Midlet extends MIDlet implements
     private void startHRM() {
         showConnecting("Connecting HRM...");
         hrm=new HRM(this);
-        hrm.setHRMBtAddress("btspp://FF0BAE1CA3E0:1");        
+        hrm.setHRMBtAddress("btspp://"+device+":1");        
         Thread ht = new Thread(hrm);
         ht.start();        
     }
@@ -124,7 +135,7 @@ public class Midlet extends MIDlet implements
     }
     
     public void heartRateDisconnected() {
-        form.removeCommand(backCommand);        
+        form.removeCommand(backCommand);
         form.addCommand(okCommand);
         hideConnecting();
     }    
