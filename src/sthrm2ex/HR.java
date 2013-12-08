@@ -7,31 +7,25 @@ package sthrm2ex;
  *
  * @author milang
  */
-public class HR {
-    
-    final int GENDER_MAN=1;
-    final int GENDER_WOMAN=2;    
-    
+public class HR implements HeartRateInterface {       
     private int age;
-    private double HRrest;
-    private double HRmax;
+    private double HRrest;    
     
     public HR(int age, double HRrest) {
         this.age=age;
-        this.HRrest=HRrest;
-        this.HRmax=getHRmax();        
+        this.HRrest=HRrest;                
     }
     
     public int getHRmaxInt() {
-        return (int)Math.floor(HRmax);
+        return (int)Math.floor(getHRmax());
     }
     
     public double getHRmax() {
         return 163.0 + (1.16*age)-(0.018*age*age);        
     }
     
-    public double getHRr() {
-        return HRmax-HRrest;
+    final public double getHRr() {
+        return getHRmax()-HRrest;
     }
     
 }
