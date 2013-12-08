@@ -86,9 +86,11 @@ public class Midlet extends MIDlet implements
     public void btDeviceSelected(String address) {        
         if (address.length()==12) {
             device=address;
-        } else {
+            switchDisplayable(getInformationAlert("Device selected", "HRM device is "+address), form);            
+        } else {            
             device="";
-        }
+            switchDisplayable(null, form);
+        }        
     }
     
     public void showConnecting(String msg) {
@@ -103,7 +105,7 @@ public class Midlet extends MIDlet implements
     }
     
     private void startHRM() {
-        showConnecting("Connecting HRM...");
+        showConnecting("Connecting to HRM: "+device);
         hrm=new HRM(this);
         hrm.setHRMBtAddress("btspp://"+device+":1");        
         Thread ht = new Thread(hrm);
@@ -162,6 +164,15 @@ public class Midlet extends MIDlet implements
     public void showError(String msg) {        
         getDisplay().setCurrent(getErrorAlert(msg));
     }
+    
+    public Alert getInformationAlert(String title, String msg) {
+        return new Alert(title, msg, null, AlertType.CONFIRMATION);
+    }
+    
+    public void showInformation(String title, String msg) {        
+        Alert info = new Alert(title, msg, null, AlertType.CONFIRMATION);
+        getDisplay().setCurrent(info);
+    }    
     
     public void exitMIDlet() {        
         switchDisplayable(null, null);
